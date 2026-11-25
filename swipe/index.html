@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swipe! Icebreaker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* VOICE occasion: a classroom icebreaker, playful but respectful of a serious topic
+   IDEA a dating-app card stack; each scenario is a "profile" you swipe on
+   PICTURE the live card deck, drag-to-swipe with red/green flag stamps
+   COLOUR rose ground, white cards, red for left, green for right, category art per card
+   TYPE Outfit 900 display + Outfit text
+   LAYOUT laptop: header row, deck left, discussion panel right; phone: title, deck, buttons, panel */
+:root{color-scheme:light dark;--bg:light-dark(#ffe0e7,#1f0f17);--ink:light-dark(#2a0b16,#ffe9ee);--soft:light-dark(#7a4a5a,#d8a9b8);--card:light-dark(#ffffff,#2e1822);--line:light-dark(#f3c3cf,#4a2a37);--panel:light-dark(#fff5f7,#28141d);--no:#e0353b;--yes:#139a57;--hot:#ff3d77}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Outfit,system-ui,sans-serif;overflow-x:clip}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,textarea:focus-visible{outline:3px solid var(--hot);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:clamp(16px,3vw,36px) max(4vw,16px) 40px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;margin-bottom:18px}
+h1{font-size:clamp(40px,6vw,56px);line-height:1;letter-spacing:-.03em;font-weight:900;margin:0}
+.sub{margin:4px 0 0;color:var(--soft);font-weight:500}
+.tools{display:flex;flex-wrap:wrap;gap:8px}
+.tbtn{border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:9px 16px;min-height:44px;font-weight:600;font-size:15px}
+.tbtn:hover{border-color:var(--hot)}
+.legend{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:22px}
+.leg{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:16px;font-weight:500;line-height:1.3}
+.leg b{display:block;font-size:18px;font-weight:800}
+.leg.l{background:color-mix(in srgb,var(--no) 14%,var(--card));border:1.5px solid color-mix(in srgb,var(--no) 40%,transparent)}
+.leg.r{background:color-mix(in srgb,var(--yes) 14%,var(--card));border:1.5px solid color-mix(in srgb,var(--yes) 40%,transparent)}
+.leg svg{flex:none;width:34px;height:34px}
+main{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:clamp(20px,4vw,48px);align-items:start}
+.play{display:flex;flex-direction:column;align-items:center}
+.prog{width:min(100%,410px);display:flex;align-items:center;gap:12px;margin-bottom:12px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar{flex:1;height:8px;border-radius:9px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--hot);border-radius:9px;transition:width .3s}
+.stack{position:relative;width:min(100%,410px);height:clamp(460px,62svh,580px)}
+.card{position:absolute;inset:0;background:var(--card);border-radius:26px;box-shadow:0 2px 0 var(--line),0 14px 30px -18px rgba(80,10,30,.45);overflow:hidden;display:flex;flex-direction:column;touch-action:none;user-select:none;-webkit-user-select:none;will-change:transform}
+.card.top{cursor:grab}.card.top:active{cursor:grabbing}
+.card.under{transform:scale(.95) translateY(14px);filter:brightness(.97)}
+.card.under2{transform:scale(.9) translateY(28px);opacity:.7}
+.art{position:relative;flex:0 0 42%}
+.art svg{position:absolute;inset:0;width:100%;height:100%}
+.chip{position:absolute;left:14px;top:14px;background:rgba(255,255,255,.92);color:#2a0b16;font-weight:700;font-size:14px;padding:5px 12px;border-radius:999px}
+.cbody{flex:1;padding:20px 24px 24px;display:flex;flex-direction:column;gap:12px}
+.tag{align-self:flex-start;font-size:14px;font-weight:700;padding:4px 12px;border-radius:999px;background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--ink);border:1.5px solid color-mix(in srgb,var(--c) 50%,transparent)}
+.stmt{margin:0;font-size:clamp(21px,2.3vw,26px);line-height:1.25;font-weight:700;letter-spacing:-.01em;text-wrap:pretty}
+.hint{margin-top:auto;color:var(--soft);font-size:14px}
+.stamp{position:absolute;top:30px;padding:6px 14px;border:5px solid;border-radius:12px;font-weight:900;font-size:30px;letter-spacing:.02em;opacity:0;pointer-events:none;background:rgba(255,255,255,.85)}
+.stamp.no{right:22px;color:var(--no);transform:rotate(14deg)}
+.stamp.yes{left:22px;color:var(--yes);transform:rotate(-14deg)}
+.end{position:absolute;inset:0;border-radius:26px;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px;gap:14px;border:2px dashed var(--line)}
+.end h2{margin:0;font-size:34px;line-height:1.05;font-weight:900}
+.tally{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.tally span{padding:8px 16px;border-radius:14px;font-weight:800;font-size:20px;white-space:nowrap}
+.btns{display:flex;align-items:center;justify-content:center;gap:22px;margin-top:22px}
+.rb{border:0;border-radius:50%;display:grid;place-items:center;background:var(--card);box-shadow:0 2px 0 var(--line),0 10px 20px -12px rgba(80,10,30,.5);transition:transform .12s}
+.rb:active{transform:scale(.92)}
+.rb.big{width:76px;height:76px}.rb.sm{width:54px;height:54px}
+.rb svg{width:46%;height:46%}
+.rb.no{color:var(--no)}.rb.yes{color:var(--yes)}.rb.un{color:var(--soft)}
+.rb.lit.no{background:var(--no);color:#fff}.rb.lit.yes{background:var(--yes);color:#fff}
+.rb:disabled{opacity:.4;cursor:default}
+.keys{color:var(--soft);font-size:14px;margin-top:12px;text-align:center}
+.panel{background:var(--panel);border:1.5px solid var(--line);border-radius:24px;padding:clamp(20px,3vw,30px)}
+.panel h2{margin:0 0 6px;font-size:28px;line-height:1.1;font-weight:800;letter-spacing:-.01em}
+.panel h3{margin:18px 0 6px;font-size:18px;font-weight:800}
+.panel p{margin:0 0 10px}
+.steps{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:10px}
+.steps li{display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px;align-items:start}
+.steps svg{width:34px;height:34px}
+.pill{display:inline-block;padding:3px 12px;border-radius:999px;font-weight:800;color:#fff;font-size:15px;white-space:nowrap}
+.pill.L{background:var(--no)}.pill.R{background:var(--yes)}.pill.D{background:#8a6a00}.pill.N{background:var(--soft)}
+.quote{font-size:19px;font-weight:600;line-height:1.35;margin:10px 0 12px}
+.vote{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-top:8px}
+.vbox{border-radius:16px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--card);border:1.5px solid var(--line)}
+.vbox b{font-size:15px}
+.vbox .n{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums;min-width:1.6em;text-align:center}
+.vbox button{width:44px;height:44px;border-radius:12px;border:1.5px solid var(--line);background:var(--panel);font-size:22px;font-weight:700;line-height:1}
+.ask{margin-top:16px;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--hot) 12%,var(--card));font-weight:600}
+.sum{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px;max-height:420px;overflow:auto}
+.sum li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;background:var(--card);font-size:15px;line-height:1.3}
+.sum small{display:block;color:var(--soft);font-size:13px;margin-top:2px}
+.note{color:var(--soft);font-size:14px;margin-top:14px}
+.modal{position:fixed;inset:0;background:rgba(20,4,10,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:9}
+.modal.on{display:flex}
+.sheet{background:var(--card);border-radius:22px;padding:22px;width:min(100%,720px);max-height:calc(100% - 32px);display:flex;flex-direction:column;gap:10px}
+.sheet h2{margin:0;font-size:26px;font-weight:800}
+.sheet textarea{width:100%;flex:1;min-height:260px;font:16px/1.5 Outfit,system-ui,sans-serif;padding:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);resize:vertical}
+.row{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+.tbtn.pri{background:var(--hot);border-color:var(--hot);color:#fff}
+@media(max-width:900px){main{grid-template-columns:minmax(0,1fr)}.panel{max-width:620px;width:100%;margin:0 auto}}
+@media(max-width:600px){.legend{grid-template-columns:minmax(0,1fr)}.leg{padding:10px 14px}.stack{height:clamp(420px,60svh,520px)}.keys{display:none}header{align-items:flex-start}}
+@media(prefers-reduced-motion:reduce){.bar i,.rb{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Swipe!</h1>
+      <p class="sub">An icebreaker on online sex culture</p>
+    </div>
+    <div class="tools">
+      <button class="tbtn" id="shuf" type="button">Shuffle</button>
+      <button class="tbtn" id="edit" type="button">Edit cards</button>
+      <button class="tbtn" id="restart" type="button">Restart</button>
+      <button class="tbtn" id="fs" type="button">Full screen</button>
+    </div>
+  </header>
+
+  <div class="legend">
+    <div class="leg l"><svg viewBox="0 0 34 34"><circle cx="17" cy="17" r="16" fill="#e0353b"/><path d="M20 10l-7 7 7 7" stroke="#fff" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><div><b>Swipe left</b>Unacceptable, harmful, or a red flag</div></div>
+    <div class="leg r"><svg viewBox="0 0 34 34"><circle cx="17" cy="17" r="16" fill="#139a57"/><path d="M14 10l7 7-7 7" stroke="#fff" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><div><b>Swipe right</b>Acceptable, healthy, or apparent online</div></div>
+  </div>
+
+  <main>
+    <section class="play" aria-label="Card deck">
+      <div class="prog"><span id="pn">1 / 18</span><div class="bar"><i id="pb"></i></div></div>
+      <div class="stack" id="stack"></div>
+      <div class="btns">
+        <button class="rb big no" id="bno" type="button" aria-label="Swipe left: red flag"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></button>
+        <button class="rb sm un" id="bun" type="button" aria-label="Undo last swipe"><svg viewBox="0 0 24 24"><path d="M9 7H4v-5M4.5 7A9 9 0 1 1 3 13" stroke="currentColor" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="rb big yes" id="byes" type="button" aria-label="Swipe right: acceptable"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5" stroke="currentColor" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <p class="keys">Drag the card, tap the buttons, or use ← → keys. Backspace undoes.</p>
+    </section>
+
+    <aside class="panel" id="panel" aria-live="polite"></aside>
+  </main>
+</div>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mt">
+  <div class="sheet">
+    <h2 id="mt">Edit the deck</h2>
+    <p style="margin:0">One scenario per line. To add a talking point for the presenter, put it after a <b>|</b> on the same line.</p>
+    <textarea id="ta" spellcheck="true"></textarea>
+    <div class="row">
+      <button class="tbtn" id="mreset" type="button">Use sample deck</button>
+      <button class="tbtn" id="mcancel" type="button">Cancel</button>
+      <button class="tbtn pri" id="msave" type="button">Save and restart</button>
+    </div>
+  </div>
+</div>
+
+<script>
+{
+const CATS={
+  consent:{n:'Consent',a:'#ff4f74',b:'#ffa27a'},
+  privacy:{n:'Privacy',a:'#2563eb',b:'#4fc3f7'},
+  safety:{n:'Safety',a:'#0d9488',b:'#5fe0b4'},
+  pressure:{n:'Pressure',a:'#e8890c',b:'#fcd34d'},
+  media:{n:'Media',a:'#334155',b:'#7b8ba5'},
+  identity:{n:'Identity',a:'#e2541b',b:'#fb9a5b'},
+  custom:{n:'Scenario',a:'#d61f4f',b:'#ff8aa5'}
+};
+const SAMPLE=[
+ {c:'consent',v:'R',t:'Asking “is it okay if I send you something spicy?” before sending a sexual photo.',p:'Asking first turns a surprise into a choice. Consent online works the way it does offline: it is specific, it can be taken back, and silence is not a yes.'},
+ {c:'privacy',v:'L',t:'Forwarding a nude that someone sent you privately to your friends’ group chat.',p:'Agreeing to send one photo to one person is not agreeing to have it shared. In the Philippines, RA 9995 (Anti-Photo and Video Voyeurism Act) punishes copying or sharing such images without the person’s consent.'},
+ {c:'pressure',v:'L',t:'Your partner says, “If you really loved me, you’d send one.”',p:'Guilt-tripping is coercion, even when it sounds romantic. A yes given under pressure is not freely given consent.'},
+ {c:'consent',v:'R',t:'Two consenting adults sexting because both of them want to.',p:'Between adults who both agree, sexting can be a normal part of intimacy. The bigger risk is what happens to the messages afterwards, so talk about saving and deleting.'},
+ {c:'safety',v:'L',t:'Getting an unsolicited explicit photo from a match five minutes into the chat.',p:'Unsolicited explicit images are a form of gender-based online sexual harassment, which the Safe Spaces Act (RA 11313) covers. Block, report, and keep evidence if you may file a complaint.'},
+ {c:'safety',v:'R',t:'Video-calling a match before meeting up, to check they are who they say they are.',p:'A quick call is one of the easiest ways to catch a catfish. Pair it with meeting in a public place and telling a friend where you will be.'},
+ {c:'privacy',v:'D',t:'Screenshotting a flirty, sexy chat “just to keep it,” without telling the other person.',p:'Even if it is never shared, a saved copy can leak through a lost phone or a hacked cloud account. Does keeping it without asking change the trust between you?'},
+ {c:'pressure',v:'L',t:'A partner asks for all your passwords “to prove you’re not cheating.”',p:'Demanding access to someone’s accounts is a common sign of controlling behaviour. Trust that has to be checked through your phone is not really trust.'},
+ {c:'media',v:'D',t:'Following a creator who sells adult content on a subscription site.',p:'For adults, paying creators for content they chose to make is a visible part of the online scene. Where is the line between supporting creators and the pressures this kind of platform work can bring?'},
+ {c:'safety',v:'L',t:'Commenting “send nudes” on a stranger’s selfie as a joke.',p:'It may feel like a joke to the person typing it, but for the person receiving it, it is public harassment. Sexual remarks online are covered by the Safe Spaces Act too.'},
+ {c:'consent',v:'R',t:'You say “not tonight” mid-chat, and they reply “okay, no worries” and change the topic.',p:'This is what respecting a boundary looks like: no sulking, no bargaining, and no asking again five minutes later.'},
+ {c:'safety',v:'L',t:'An adult keeps flirting with someone who said they’re 16, and asks them to keep the chats secret.',p:'Sexual attention toward a minor, plus a request for secrecy, is a grooming pattern. It should be reported to the platform and to authorities. RA 11930 is the Philippine law against online sexual abuse and exploitation of children.'},
+ {c:'media',v:'L',t:'A “leaked scandal” video is trending, and you share the link “just so people know.”',p:'Every share spreads the harm further. The person in the video did not agree to an audience, and passing it on can itself be a crime.'},
+ {c:'consent',v:'R',t:'Talking about boundaries and STI testing over chat before meeting up.',p:'Awkward for a minute, then a relief. Having the talk early, and in writing, gives both people room to think.'},
+ {c:'identity',v:'L',t:'Using someone else’s photos on your dating profile because “everyone edits anyway.”',p:'Filters and good lighting are one thing; pretending to be another person is catfishing. It deceives your matches and misuses the identity of the person in the photos.'},
+ {c:'media',v:'D',t:'Learning most of what you know about sex from porn.',p:'This is very common, which is exactly why it is worth discussing. Porn is made to entertain, not to teach consent, safety, or what real partners want.'},
+ {c:'safety',v:'R',t:'Blocking and reporting someone who keeps sending sexual messages after you said stop.',p:'Using the tools is the right move, not an overreaction. Dated screenshots help if you decide to report further.'},
+ {c:'identity',v:'L',t:'Making an AI-generated “nude” of a classmate as a joke for the group chat.',p:'A deepfake causes real harm even though the image is fake. It violates the person’s dignity and can count as online sexual harassment.'}
+];
+const VIEW={L:['Most would say: red flag','L'],R:['Most would say: green flag','R'],D:['Up for debate','D'],N:['Your call','N']};
+const KEY='swipe-deck-v1';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let deck=SAMPLE.slice();
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(Array.isArray(s)&&s.length)deck=s}catch(e){}
+let st={i:0,ans:[],order:deck.map((_,k)=>k)};
+let busy=false;
+
+const cardOf=k=>deck[st.order[k]];
+
+function art(c){
+  const C=CATS[c]||CATS.custom,a=C.a,id='g'+c;
+  const ic={
+    consent:`<rect x="-46" y="-36" width="62" height="42" rx="14" fill="#fff"/><path d="M-32 4l-8 16 20-16z" fill="#fff"/><rect x="-8" y="-6" width="56" height="38" rx="14" fill="#fff" opacity=".72"/><path d="M34 30l8 12-20-12z" fill="#fff" opacity=".72"/><path d="M-30 -16l8 8 16-16" stroke="${a}" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
+    privacy:`<path d="M-20 -8v-14a20 20 0 0 1 40 0v14" stroke="#fff" stroke-width="10" fill="none"/><rect x="-34" y="-10" width="68" height="54" rx="12" fill="#fff"/><rect x="-34" y="20" width="68" height="24" rx="12" fill="${a}" opacity=".12"/><circle cy="10" r="8" fill="${a}"/><rect x="-3.5" y="12" width="7" height="16" rx="3" fill="${a}"/>`,
+    safety:`<path d="M0 -46L38 -32V0C38 25 19 39 0 48C-19 39-38 25-38 0V-32Z" fill="#fff"/><path d="M0 -46L38 -32V0C38 25 19 39 0 48Z" fill="${a}" opacity=".12"/><path d="M-16 0l11 11 22-22" stroke="${a}" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
+    pressure:`<circle cy="-28" r="13" stroke="#fff" stroke-width="8" fill="none"/><path d="M-34 44L-24 -14H24L34 44Z" fill="#fff"/><path d="M0 -14H24L34 44H0Z" fill="${a}" opacity=".14"/><rect x="-4.5" y="-2" width="9" height="26" rx="4" fill="${a}"/><circle cy="34" r="5" fill="${a}"/>`,
+    media:`<rect x="-28" y="-46" width="56" height="92" rx="12" fill="#fff"/><rect x="-21" y="-36" width="42" height="66" rx="5" fill="${a}" opacity=".18"/><path d="M-8 -14L14 0-8 14Z" fill="${a}"/><rect x="-8" y="36" width="16" height="4" rx="2" fill="${a}" opacity=".4"/>`,
+    identity:`<circle cy="-18" r="18" fill="#fff"/><path d="M-36 46C-36 16-18 6 0 6S36 16 36 46Z" fill="#fff"/><path d="M0 6C18 6 36 16 36 46H0Z" fill="${a}" opacity=".12"/><text x="0" y="-9" text-anchor="middle" font-family="Outfit,sans-serif" font-weight="900" font-size="28" fill="${a}">?</text>`,
+    custom:`<path d="M0 40C-30 18-44 2-44 -16C-44 -32-32 -42-19 -42C-10 -42-4 -37 0 -30C4 -37 10 -42 19 -42C32 -42 44 -32 44 -16C44 2 30 18 0 40Z" fill="#fff"/><path d="M0 40V-30C4 -37 10 -42 19 -42C32 -42 44 -32 44 -16C44 2 30 18 0 40Z" fill="${a}" opacity=".12"/>`
+  }[c]||'';
+  return `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${C.a}"/><stop offset="1" stop-color="${C.b}"/></linearGradient><pattern id="${id}p" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.3" fill="#fff" opacity=".22"/></pattern></defs><rect width="220" height="130" fill="url(#${id})"/><rect width="220" height="130" fill="url(#${id}p)"/><circle cx="196" cy="-6" r="56" fill="#fff" opacity=".1"/><circle cx="-10" cy="138" r="46" fill="#000" opacity=".06"/><g transform="translate(150 66) scale(.82)"><ellipse cy="56" rx="44" ry="7" fill="#000" opacity=".16"/>${ic}</g></svg>`;
+}
+
+function cardHTML(k,cls){
+  const d=cardOf(k),C=CATS[d.c]||CATS.custom;
+  return `<div class="card ${cls}" style="--c:${C.a}"><div class="art">${art(d.c in CATS?d.c:'custom')}<span class="chip">Scenario ${k+1} of ${deck.length}</span></div><div class="cbody"><span class="tag">${esc(C.n)}</span><p class="stmt">${esc(d.t)}</p><p class="hint">Swipe, then explain your choice.</p></div><div class="stamp yes">GREEN FLAG</div><div class="stamp no">RED FLAG</div></div>`;
+}
+
+function render(){
+  const n=deck.length,i=st.i,stack=$('stack');
+  $('pn').textContent=`${Math.min(i+1,n)} / ${n}`;
+  $('pb').style.width=(i/n*100)+'%';
+  if(i>=n){
+    const L=st.ans.filter(a=>a.d==='L').length,R=st.ans.length-L;
+    stack.innerHTML=`<div class="end"><h2>That’s the deck</h2><p style="margin:0">You swiped through all ${n} scenarios.</p><div class="tally"><span style="background:color-mix(in srgb,var(--no) 16%,transparent);color:var(--no)">${L} left</span><span style="background:color-mix(in srgb,var(--yes) 16%,transparent);color:var(--yes)">${R} right</span></div><button class="tbtn pri" type="button" id="again">Play again</button></div>`;
+    $('again').onclick=restart;
+  }else{
+    let h='';
+    for(let k=Math.min(i+2,n-1);k>=i;k--)h+=cardHTML(k,k===i?'top':k===i+1?'under':'under2');
+    stack.innerHTML=h;
+    drag(stack.querySelector('.top'));
+  }
+  $('bno').disabled=$('byes').disabled=i>=n;
+  $('bun').disabled=i===0;
+  panel();
+}
+
+function panel(){
+  const p=$('panel'),i=st.i,n=deck.length;
+  if(i===0){
+    p.innerHTML=`<h2>How to play</h2><p>The presenters show a statement or situation about online sex culture. Your only job is to swipe.</p><ul class="steps">
+    <li><svg viewBox="0 0 34 34"><circle cx="17" cy="17" r="16" fill="#139a57"/><path d="M14 10l7 7-7 7" stroke="#fff" stroke-width="3.4" fill="none" stroke-linecap="round"/></svg><div><b>Swipe right</b> if you think the behaviour or scenario is acceptable, healthy, or apparent in the online scene.</div></li>
+    <li><svg viewBox="0 0 34 34"><circle cx="17" cy="17" r="16" fill="#e0353b"/><path d="M20 10l-7 7 7 7" stroke="#fff" stroke-width="3.4" fill="none" stroke-linecap="round"/></svg><div><b>Swipe left</b> if you think it is unacceptable, harmful, or a red flag.</div></li>
+    <li><svg viewBox="0 0 34 34"><circle cx="17" cy="17" r="16" fill="#ff3d77"/><path d="M10 12h14M10 17h10M10 22h6" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg><div><b>Explain</b> your choice if you like. There is room for different answers.</div></li></ul>
+    <p class="note">After each swipe, this panel shows a talking point and a hand-count for the room.</p>`;
+    return;
+  }
+  const k=i-1,d=cardOf(k),a=st.ans[k],v=VIEW[d.v]||VIEW.N;
+  let h=`<h2>Scenario ${k+1}</h2><p class="quote">${esc(d.t)}</p>
+  <p>Swiped <span class="pill ${a.d}">${a.d==='L'?'Left · red flag':'Right · green flag'}</span> &nbsp;<span class="pill ${v[1]}">${v[0]}</span></p>`;
+  if(d.p)h+=`<h3>Talking point</h3><p>${esc(d.p)}</p>`;
+  h+=`<h3>Room vote</h3><p style="margin:0;color:var(--soft);font-size:15px">Count hands for each side.</p><div class="vote">
+  <div class="vbox"><b style="color:var(--no)">Left</b><button type="button" data-v="l" data-s="-1" aria-label="Fewer left votes">−</button><span class="n">${a.l}</span><button type="button" data-v="l" data-s="1" aria-label="More left votes">+</button></div>
+  <div class="vbox"><b style="color:var(--yes)">Right</b><button type="button" data-v="r" data-s="-1" aria-label="Fewer right votes">−</button><span class="n">${a.r}</span><button type="button" data-v="r" data-s="1" aria-label="More right votes">+</button></div></div>
+  <div class="ask">Ask the room: who swiped the other way, and why?</div>`;
+  if(i>=n){
+    h+=`<h3>All swipes</h3><ul class="sum">${st.ans.map((x,j)=>`<li><div>${esc(cardOf(j).t)}<small>Room: ${x.l} left · ${x.r} right</small></div><span class="pill ${x.d}">${x.d==='L'?'Left':'Right'}</span></li>`).join('')}</ul>
+    <div class="row" style="justify-content:flex-start;margin-top:12px"><button class="tbtn" type="button" id="copy">Copy results</button></div>`;
+  }
+  p.innerHTML=h;
+  p.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{const key=b.dataset.v;a[key]=Math.max(0,a[key]+ +b.dataset.s);panel()});
+  const cp=$('copy');
+  if(cp)cp.onclick=()=>{
+    const txt=st.ans.map((x,j)=>`${j+1}. ${cardOf(j).t} — ${x.d==='L'?'Left':'Right'} (room: ${x.l} left, ${x.r} right)`).join('\n');
+    navigator.clipboard?.writeText(txt).then(()=>cp.textContent='Copied',()=>cp.textContent='Copy failed');
+  };
+}
+
+function setStamps(el,dx){
+  const o=Math.min(1,Math.abs(dx)/110);
+  el.querySelector('.stamp.yes').style.opacity=dx>0?o:0;
+  el.querySelector('.stamp.no').style.opacity=dx<0?o:0;
+  $('byes').classList.toggle('lit',dx>40);
+  $('bno').classList.toggle('lit',dx<-40);
+}
+
+function drag(el){
+  if(!el)return;
+  let sx=0,sy=0,dx=0,dy=0,on=false;
+  el.addEventListener('pointerdown',e=>{if(busy)return;on=true;sx=e.clientX;sy=e.clientY;dx=dy=0;el.style.transition='none';el.setPointerCapture(e.pointerId)});
+  el.addEventListener('pointermove',e=>{if(!on)return;dx=e.clientX-sx;dy=e.clientY-sy;el.style.transform=`translate(${dx}px,${dy}px) rotate(${dx/18}deg)`;setStamps(el,dx)});
+  const up=()=>{if(!on)return;on=false;
+    if(Math.abs(dx)>100)fly(dx>0?'R':'L',dx,dy);
+    else{el.style.transition=rm?'none':'transform .25s';el.style.transform='';setStamps(el,0)}};
+  el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);
+}
+
+function fly(d,dx=0,dy=0){
+  if(busy||st.i>=deck.length)return;
+  const el=$('stack').querySelector('.top');if(!el)return;
+  busy=true;
+  if(!dx){setStamps(el,d==='R'?120:-120)}
+  const W=innerWidth,dir=d==='R'?1:-1;
+  el.style.transition=rm?'none':'transform .32s ease-in';
+  requestAnimationFrame(()=>{el.style.transform=`translate(${dir*W}px,${dy+40}px) rotate(${dir*28}deg)`});
+  setTimeout(()=>{st.ans[st.i]={d,l:0,r:0};st.i++;busy=false;$('byes').classList.remove('lit');$('bno').classList.remove('lit');render()},rm?0:300);
+}
+
+function undo(){if(busy||st.i===0)return;st.i--;st.ans.length=st.i;render()}
+function restart(){st={i:0,ans:[],order:deck.map((_,k)=>k)};render()}
+
+$('bno').onclick=()=>fly('L');
+$('byes').onclick=()=>fly('R');
+$('bun').onclick=undo;
+$('restart').onclick=restart;
+$('shuf').onclick=()=>{const o=deck.map((_,k)=>k);for(let k=o.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[o[k],o[j]]=[o[j],o[k]]}st={i:0,ans:[],order:o};render()};
+$('fs').onclick=()=>{try{const d=document;if(d.fullscreenElement)d.exitFullscreen?.();else d.documentElement.requestFullscreen?.().catch(()=>{})}catch(e){}};
+
+const modal=$('modal'),ta=$('ta');
+const toText=arr=>arr.map(d=>d.p?`${d.t} | ${d.p}`:d.t).join('\n');
+$('edit').onclick=()=>{ta.value=toText(deck);modal.classList.add('on');ta.focus()};
+$('mcancel').onclick=()=>modal.classList.remove('on');
+modal.addEventListener('click',e=>{if(e.target===modal)modal.classList.remove('on')});
+$('mreset').onclick=()=>{ta.value=toText(SAMPLE)};
+$('msave').onclick=()=>{
+  const lines=ta.value.split('\n').map(s=>s.trim()).filter(Boolean);
+  if(!lines.length)return;
+  deck=lines.map(line=>{
+    const [t,...rest]=line.split('|');const text=t.trim(),pt=rest.join('|').trim();
+    const old=SAMPLE.find(s=>s.t===text);
+    return old?{...old,p:pt||old.p}:{c:'custom',v:'N',t:text,p:pt};
+  });
+  try{localStorage.setItem(KEY,JSON.stringify(deck))}catch(e){}
+  modal.classList.remove('on');restart();
+};
+
+addEventListener('keydown',e=>{
+  if(modal.classList.contains('on')){if(e.key==='Escape')modal.classList.remove('on');return}
+  if(e.target.closest&&e.target.closest('textarea,input'))return;
+  if(e.key==='ArrowRight'){e.preventDefault();fly('R')}
+  else if(e.key==='ArrowLeft'){e.preventDefault();fly('L')}
+  else if(e.key==='Backspace'){e.preventDefault();undo()}
+});
+
+window.claude?.hot?.snapshot?.(()=>st);
+const start=data=>{if(data&&Array.isArray(data.ans)&&Array.isArray(data.order)&&data.order.length===deck.length)st=data;render()};
+window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+}
+</script>
+</body>
+</html>
