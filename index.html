@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swipe! Icebreaker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE a class reporting activity: loud, friendly, made by students with markers and stickers
+   IDEA a stack of hand-cut paper cards on a pink board, like a zine or a classroom game
+   PICTURE one huge card per statement, readable from the back of a room
+   COLOUR flat pink ground, white paper cards with black outlines, red and green for the two sides, yellow tape
+   TYPE Archivo 900 for titles and statements + Caveat for handwritten notes
+   LAYOUT three screens: start (rules + Start), play (big card + buttons), reveal (verdict + discussion); one column on phones */
+:root{color-scheme:light;--bg:#ff7eaa;--ink:#141012;--paper:#fffdf7;--no:#ff3b3b;--yes:#17b26a;--tape:#ffd84a;--mute:#5b4650}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:500 17px/1.5 Archivo,system-ui,sans-serif;overflow-x:clip}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,textarea:focus-visible{outline:4px solid var(--ink);outline-offset:3px}
+.screen{display:none;min-height:100%;padding:clamp(16px,3vw,36px) max(4vw,16px)}
+.screen.on{display:flex;flex-direction:column}
+.hand{font-family:Caveat,cursive;font-weight:700}
+.btn{border:3px solid var(--ink);background:var(--paper);border-radius:14px;padding:10px 20px;min-height:48px;font-weight:800;font-size:17px;box-shadow:4px 4px 0 var(--ink);transition:transform .08s,box-shadow .08s}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--ink)}
+.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.btn.go{background:var(--ink);color:#fff;box-shadow:4px 4px 0 #fff}
+.btn.sm{min-height:44px;padding:8px 14px;font-size:15px;box-shadow:3px 3px 0 var(--ink)}
+.link{background:none;border:0;text-decoration:underline;text-underline-offset:4px;font-weight:700;padding:10px 6px;min-height:44px}
+
+/* start */
+#start{align-items:center;justify-content:center;gap:clamp(18px,3vh,30px);text-align:center}
+.logo{font-weight:900;font-size:clamp(72px,14vw,150px);line-height:.9;letter-spacing:-.05em;margin:0;transform:rotate(-3deg);color:var(--paper);-webkit-text-stroke:4px var(--ink);paint-order:stroke fill;text-shadow:6px 6px 0 var(--ink)}
+.tagline{margin:-6px 0 0;font-size:clamp(28px,3.6vw,38px);line-height:1.1}
+.rules{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;width:min(100%,860px);text-align:left}
+.rule{position:relative;background:var(--paper);border:3px solid var(--ink);border-radius:18px;padding:24px 22px 20px;box-shadow:6px 6px 0 var(--ink)}
+.rule.l{transform:rotate(-1.5deg)}.rule.r{transform:rotate(1.2deg)}
+.rule::before{content:"";position:absolute;top:-14px;left:50%;width:90px;height:26px;margin-left:-45px;background:var(--tape);opacity:.9;transform:rotate(-4deg);border:1.5px solid rgba(0,0,0,.15)}
+.rule h2{margin:0 0 6px;font-size:clamp(26px,3vw,34px);font-weight:900;line-height:1.05;display:flex;align-items:center;gap:10px}
+.rule.l h2{color:var(--no)}.rule.r h2{color:var(--yes)}
+.rule p{margin:0;font-size:18px}
+.arrow{flex:none;width:44px;height:44px;border-radius:50%;border:3px solid var(--ink);display:grid;place-items:center;color:#fff}
+.rule.l .arrow{background:var(--no)}.rule.r .arrow{background:var(--yes)}
+.arrow svg{width:22px;height:22px}
+.intro{max-width:640px;margin:0;font-size:19px}
+.startrow{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:center}
+#go{font-size:24px;padding:14px 46px;min-height:64px}
+
+/* play */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.mini{font-weight:900;font-size:30px;letter-spacing:-.04em;margin:0;color:var(--paper);-webkit-text-stroke:2px var(--ink);paint-order:stroke fill;text-shadow:3px 3px 0 var(--ink);transform:rotate(-3deg)}
+.count{font-weight:900;font-size:20px;background:var(--paper);border:3px solid var(--ink);border-radius:999px;padding:6px 16px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.topbtns{display:flex;gap:8px;flex-wrap:wrap}
+.arena{flex:1;display:grid;grid-template-columns:120px minmax(0,1fr) 120px;align-items:center;gap:16px;padding:20px 0 10px}
+.side{font-weight:900;font-size:26px;line-height:1;text-align:center;opacity:.85}
+.side.l{color:var(--no);-webkit-text-stroke:1px var(--ink)}.side.r{color:var(--yes);-webkit-text-stroke:1px var(--ink)}
+.side span{display:block;font-size:56px;margin-bottom:6px}
+.deck{position:relative;width:min(100%,780px);height:clamp(340px,58svh,600px);margin:0 auto}
+.ghost,.card{position:absolute;inset:0;background:var(--paper);border:3px solid var(--ink);border-radius:24px}
+.ghost.a{transform:rotate(-3.5deg) translate(-8px,10px)}
+.ghost.b{transform:rotate(2.5deg) translate(10px,6px)}
+.card{box-shadow:8px 8px 0 var(--ink);padding:clamp(22px,4vw,48px);display:flex;flex-direction:column;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;will-change:transform}
+.card:active{cursor:grabbing}
+.card .num{font-size:clamp(26px,3vw,34px);color:var(--mute);line-height:1}
+.card .q{margin:auto 0;font-weight:800;font-size:clamp(28px,4.2vw,54px);line-height:1.12;letter-spacing:-.02em;text-wrap:balance}
+.card .tag{align-self:flex-start;background:var(--tape);border:2px solid var(--ink);border-radius:8px;padding:2px 12px;font-weight:800;font-size:15px;transform:rotate(-2deg)}
+.stamp{position:absolute;top:26px;border:5px solid;border-radius:10px;padding:4px 14px;font-weight:900;font-size:clamp(26px,3.4vw,40px);background:var(--paper);opacity:0;pointer-events:none}
+.stamp.no{right:26px;color:var(--no);transform:rotate(12deg)}
+.stamp.yes{left:26px;color:var(--yes);transform:rotate(-12deg)}
+.controls{display:flex;justify-content:center;align-items:center;gap:clamp(18px,4vw,40px);padding:16px 0 6px}
+.big{width:clamp(76px,9vw,96px);height:clamp(76px,9vw,96px);border-radius:50%;border:3px solid var(--ink);display:grid;place-items:center;box-shadow:5px 5px 0 var(--ink);transition:transform .08s,box-shadow .08s}
+.big:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+.big svg{width:44%;height:44%}
+.big.no{background:var(--no);color:#fff}.big.yes{background:var(--yes);color:#fff}
+.big.un{width:60px;height:60px;background:var(--paper);box-shadow:3px 3px 0 var(--ink)}
+.big:disabled{opacity:.35;cursor:default}
+.keys{text-align:center;font-size:24px;margin:4px 0 0;color:var(--ink);opacity:.75}
+
+/* reveal */
+#reveal{gap:16px}
+.verdict{width:min(100%,900px);margin:auto auto 0;border:3px solid var(--ink);border-radius:24px;box-shadow:8px 8px 0 var(--ink);overflow:hidden;display:flex;flex-direction:column;background:var(--paper)}
+.vhead{padding:clamp(18px,3vw,30px) clamp(20px,4vw,40px);color:#fff;border-bottom:3px solid var(--ink)}
+.vhead.L{background:var(--no)}.vhead.R{background:var(--yes)}
+.vhead small{font-size:26px;display:block;line-height:1}
+.vhead h2{margin:2px 0 0;font-size:clamp(40px,7vw,80px);font-weight:900;line-height:.95;letter-spacing:-.03em}
+.vbody{padding:clamp(18px,3vw,32px) clamp(20px,4vw,40px);display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:clamp(18px,3vw,36px);flex:1}
+.said{font-weight:800;font-size:clamp(20px,2.2vw,26px);line-height:1.25;margin:0 0 14px}
+.view{display:inline-block;font-weight:800;border:2px solid var(--ink);border-radius:8px;padding:2px 10px;margin-bottom:10px;font-size:15px}
+.view.L{background:#ffd6d6}.view.R{background:#c9f2dc}.view.D{background:var(--tape)}.view.N{background:#eee}
+.point{margin:0;font-size:18px}
+.vote h3{margin:0 0 2px;font-size:22px;font-weight:900}
+.vote p{margin:0 0 12px;font-size:24px;line-height:1.1}
+.vrow{display:flex;align-items:center;justify-content:space-between;gap:10px;border:3px solid var(--ink);border-radius:14px;padding:8px 10px;margin-bottom:10px}
+.vrow b{font-size:18px;font-weight:900}
+.vrow.L b{color:var(--no)}.vrow.R b{color:var(--yes)}
+.vrow .n{font-size:34px;font-weight:900;min-width:1.5em;text-align:center;font-variant-numeric:tabular-nums}
+.vrow button{width:44px;height:44px;border-radius:10px;border:2px solid var(--ink);background:var(--paper);font-size:24px;font-weight:900;line-height:1}
+.ask{margin-top:6px;font-size:28px;line-height:1.1;transform:rotate(-1.5deg)}
+.next{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;padding:14px 0 0;margin-bottom:auto}
+#nextb{font-size:22px;padding:12px 40px;min-height:60px}
+
+/* end */
+#end{align-items:center;gap:20px}
+#end h2{font-weight:900;font-size:clamp(48px,8vw,96px);line-height:.95;letter-spacing:-.04em;margin:10px 0 0;color:var(--paper);-webkit-text-stroke:3px var(--ink);paint-order:stroke fill;text-shadow:5px 5px 0 var(--ink);transform:rotate(-2deg);text-align:center}
+.totals{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.tot{background:var(--paper);border:3px solid var(--ink);border-radius:16px;padding:10px 22px;font-weight:900;font-size:24px;box-shadow:4px 4px 0 var(--ink);white-space:nowrap}
+.tot.L{color:var(--no)}.tot.R{color:var(--yes)}
+.list{list-style:none;margin:0;padding:0;width:min(100%,860px);display:grid;gap:10px}
+.list li{background:var(--paper);border:3px solid var(--ink);border-radius:14px;padding:12px 16px;display:grid;grid-template-columns:2.2em minmax(0,1fr) auto;gap:12px;align-items:center}
+.list .i{font-weight:900;font-size:20px}
+.list small{display:block;color:var(--mute);font-size:14px}
+.pill{font-weight:900;color:#fff;border:2px solid var(--ink);border-radius:8px;padding:2px 10px;white-space:nowrap;font-size:15px}
+.pill.L{background:var(--no)}.pill.R{background:var(--yes)}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(20,16,18,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:9}
+.modal.on{display:flex}
+.sheet{background:var(--paper);border:3px solid var(--ink);border-radius:20px;box-shadow:8px 8px 0 var(--ink);padding:22px;width:min(100%,720px);max-height:calc(100% - 32px);display:flex;flex-direction:column;gap:10px}
+.sheet h2{margin:0;font-size:28px;font-weight:900}
+.sheet p{margin:0}
+.sheet textarea{width:100%;flex:1;min-height:260px;font:16px/1.5 Archivo,system-ui,sans-serif;padding:12px;border-radius:12px;border:3px solid var(--ink);background:#fff;color:var(--ink);resize:vertical}
+.row{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
+
+@media(max-width:900px){.arena{grid-template-columns:minmax(0,1fr)}.side{display:none}.vbody{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.rules{grid-template-columns:minmax(0,1fr)}.keys{display:none}.deck{height:clamp(340px,54svh,480px)}.topbtns .btn{padding:6px 10px}}
+@media(prefers-reduced-motion:reduce){.btn,.big{transition:none}}
+</style>
+</head>
+<body>
+
+<section class="screen on" id="start" aria-label="Start">
+  <h1 class="logo">Swipe!</h1>
+  <p class="tagline hand">an icebreaker on online sex culture</p>
+  <p class="intro">We'll show you a statement or situation. Your only job is to swipe.</p>
+  <div class="rules">
+    <div class="rule l">
+      <h2><span class="arrow"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Swipe left</h2>
+      <p>if you think the behaviour or scenario is <b>unacceptable, harmful, or a red flag</b>.</p>
+    </div>
+    <div class="rule r">
+      <h2><span class="arrow"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Swipe right</h2>
+      <p>if you think it's <b>acceptable, healthy, or apparent</b> in the online scene.</p>
+    </div>
+  </div>
+  <p class="intro hand" style="font-size:30px;line-height:1.1">You can explain your choice after each swipe!</p>
+  <div class="startrow">
+    <button class="btn go" id="go" type="button">Start</button>
+  </div>
+  <div class="startrow">
+    <button class="link" id="shuf" type="button">Shuffle the cards</button>
+    <button class="link" id="edit" type="button">Edit the cards</button>
+  </div>
+</section>
+
+<section class="screen" id="play" aria-label="Swipe">
+  <div class="top">
+    <p class="mini">Swipe!</p>
+    <span class="count" id="count">1 / 18</span>
+    <div class="topbtns">
+      <button class="btn sm" id="fs" type="button">Full screen</button>
+      <button class="btn sm" id="home" type="button">Start over</button>
+    </div>
+  </div>
+  <div class="arena">
+    <div class="side l"><span>←</span>RED FLAG</div>
+    <div class="deck" id="deck"></div>
+    <div class="side r"><span>→</span>GREEN FLAG</div>
+  </div>
+  <div class="controls">
+    <button class="big no" id="bno" type="button" aria-label="Swipe left"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"/></svg></button>
+    <button class="big un" id="bun" type="button" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 7H4V2M4.5 7A9 9 0 1 1 3 13" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button class="big yes" id="byes" type="button" aria-label="Swipe right"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5" stroke="currentColor" stroke-width="3.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
+  <p class="keys hand">drag the card, or press ← →</p>
+</section>
+
+<section class="screen" id="reveal" aria-label="Discussion" aria-live="polite">
+  <div class="top">
+    <p class="mini">Swipe!</p>
+    <span class="count" id="count2">1 / 18</span>
+    <div class="topbtns"><button class="btn sm" id="undo2" type="button">Undo swipe</button></div>
+  </div>
+  <div class="verdict" id="verdict"></div>
+  <div class="next"><button class="btn go" id="nextb" type="button">Next card →</button></div>
+</section>
+
+<section class="screen" id="end" aria-label="Results">
+  <h2>That's all!</h2>
+  <div class="totals" id="totals"></div>
+  <ul class="list" id="list"></ul>
+  <div class="startrow">
+    <button class="btn go" id="again" type="button">Play again</button>
+    <button class="btn" id="copy" type="button">Copy results</button>
+  </div>
+</section>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mt">
+  <div class="sheet">
+    <h2 id="mt">Edit the cards</h2>
+    <p>One statement per line. To add a talking point, put it after a <b>|</b> on the same line.</p>
+    <textarea id="ta" spellcheck="true"></textarea>
+    <div class="row">
+      <button class="btn sm" id="mreset" type="button">Use sample cards</button>
+      <button class="btn sm" id="mcancel" type="button">Cancel</button>
+      <button class="btn sm go" id="msave" type="button">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+{
+const TAGS={consent:'Consent',privacy:'Privacy',safety:'Safety',pressure:'Pressure',media:'Media',identity:'Identity',custom:''};
+const SAMPLE=[
+ {c:'consent',v:'R',t:'Asking “is it okay if I send you something spicy?” before sending a sexual photo.',p:'Asking first turns a surprise into a choice. Consent online works the way it does offline: it is specific, it can be taken back, and silence is not a yes.'},
+ {c:'privacy',v:'L',t:'Forwarding a nude that someone sent you privately to your friends’ group chat.',p:'Agreeing to send one photo to one person is not agreeing to have it shared. In the Philippines, RA 9995 (Anti-Photo and Video Voyeurism Act) punishes copying or sharing such images without the person’s consent.'},
+ {c:'pressure',v:'L',t:'Your partner says, “If you really loved me, you’d send one.”',p:'Guilt-tripping is coercion, even when it sounds romantic. A yes given under pressure is not freely given consent.'},
+ {c:'consent',v:'R',t:'Two consenting adults sexting because both of them want to.',p:'Between adults who both agree, sexting can be a normal part of intimacy. The bigger risk is what happens to the messages afterwards, so talk about saving and deleting.'},
+ {c:'safety',v:'L',t:'Getting an unsolicited explicit photo from a match five minutes into the chat.',p:'Unsolicited explicit images are a form of gender-based online sexual harassment, which the Safe Spaces Act (RA 11313) covers. Block, report, and keep evidence if you may file a complaint.'},
+ {c:'safety',v:'R',t:'Video-calling a match before meeting up, to check they are who they say they are.',p:'A quick call is one of the easiest ways to catch a catfish. Pair it with meeting in a public place and telling a friend where you will be.'},
+ {c:'privacy',v:'D',t:'Screenshotting a flirty, sexy chat “just to keep it,” without telling the other person.',p:'Even if it is never shared, a saved copy can leak through a lost phone or a hacked cloud account. Does keeping it without asking change the trust between you?'},
+ {c:'pressure',v:'L',t:'A partner asks for all your passwords “to prove you’re not cheating.”',p:'Demanding access to someone’s accounts is a common sign of controlling behaviour. Trust that has to be checked through your phone is not really trust.'},
+ {c:'media',v:'D',t:'Following a creator who sells adult content on a subscription site.',p:'For adults, paying creators for content they chose to make is a visible part of the online scene. Where is the line between supporting creators and the pressures this kind of platform work can bring?'},
+ {c:'safety',v:'L',t:'Commenting “send nudes” on a stranger’s selfie as a joke.',p:'It may feel like a joke to the person typing it, but for the person receiving it, it is public harassment. Sexual remarks online are covered by the Safe Spaces Act too.'},
+ {c:'consent',v:'R',t:'You say “not tonight” mid-chat, and they reply “okay, no worries” and change the topic.',p:'This is what respecting a boundary looks like: no sulking, no bargaining, and no asking again five minutes later.'},
+ {c:'safety',v:'L',t:'An adult keeps flirting with someone who said they’re 16, and asks them to keep the chats secret.',p:'Sexual attention toward a minor, plus a request for secrecy, is a grooming pattern. It should be reported to the platform and to authorities. RA 11930 is the Philippine law against online sexual abuse and exploitation of children.'},
+ {c:'media',v:'L',t:'A “leaked scandal” video is trending, and you share the link “just so people know.”',p:'Every share spreads the harm further. The person in the video did not agree to an audience, and passing it on can itself be a crime.'},
+ {c:'consent',v:'R',t:'Talking about boundaries and STI testing over chat before meeting up.',p:'Awkward for a minute, then a relief. Having the talk early, and in writing, gives both people room to think.'},
+ {c:'identity',v:'L',t:'Using someone else’s photos on your dating profile because “everyone edits anyway.”',p:'Filters and good lighting are one thing; pretending to be another person is catfishing. It deceives your matches and misuses the identity of the person in the photos.'},
+ {c:'media',v:'D',t:'Learning most of what you know about sex from porn.',p:'This is very common, which is exactly why it is worth discussing. Porn is made to entertain, not to teach consent, safety, or what real partners want.'},
+ {c:'safety',v:'R',t:'Blocking and reporting someone who keeps sending sexual messages after you said stop.',p:'Using the tools is the right move, not an overreaction. Dated screenshots help if you decide to report further.'},
+ {c:'identity',v:'L',t:'Making an AI-generated “nude” of a classmate as a joke for the group chat.',p:'A deepfake causes real harm even though the image is fake. It violates the person’s dignity and can count as online sexual harassment.'}
+];
+const VIEW={L:'Most would say: red flag',R:'Most would say: green flag',D:'Up for debate',N:''};
+const KEY='swipe-deck-v1';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let deck=SAMPLE.slice();
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(Array.isArray(s)&&s.length)deck=s}catch(e){}
+const fresh=order=>({scr:'start',i:0,ans:[],order:order||deck.map((_,k)=>k)});
+let st=fresh();
+let busy=false;
+const cardOf=k=>deck[st.order[k]];
+
+function show(){
+  for(const s of ['start','play','reveal','end'])$(s).classList.toggle('on',st.scr===s);
+  const n=deck.length;
+  $('count').textContent=$('count2').textContent=`${Math.min(st.i+1,n)} / ${n}`;
+  if(st.scr==='play')renderCard();
+  if(st.scr==='reveal')renderReveal();
+  if(st.scr==='end')renderEnd();
+  scrollTo(0,0);
+}
+
+function renderCard(){
+  const d=cardOf(st.i),n=deck.length,tag=TAGS[d.c]||'';
+  $('deck').innerHTML=`<div class="ghost a"></div><div class="ghost b"></div>
+  <div class="card" id="card"><span class="num hand">#${st.i+1} of ${n}</span><p class="q">${esc(d.t)}</p>${tag?`<span class="tag">${esc(tag)}</span>`:''}
+  <span class="stamp yes">GREEN FLAG</span><span class="stamp no">RED FLAG</span></div>`;
+  $('bun').disabled=st.i===0;
+  drag($('card'));
+}
+
+function renderReveal(){
+  const d=cardOf(st.i),a=st.ans[st.i],L=a.d==='L';
+  $('verdict').innerHTML=`<div class="vhead ${a.d}"><small class="hand">${L?'you swiped left':'you swiped right'}</small><h2>${L?'Red flag':'Green flag'}</h2></div>
+  <div class="vbody"><div><p class="said">${esc(d.t)}</p>${VIEW[d.v]?`<span class="view ${d.v}">${VIEW[d.v]}</span>`:''}${d.p?`<p class="point">${esc(d.p)}</p>`:''}</div>
+  <div class="vote"><h3>How did the room swipe?</h3><p class="hand">count the hands</p>
+  <div class="vrow L"><b>Left</b><button type="button" data-v="l" data-s="-1" aria-label="Fewer left">−</button><span class="n">${a.l}</span><button type="button" data-v="l" data-s="1" aria-label="More left">+</button></div>
+  <div class="vrow R"><b>Right</b><button type="button" data-v="r" data-s="-1" aria-label="Fewer right">−</button><span class="n">${a.r}</span><button type="button" data-v="r" data-s="1" aria-label="More right">+</button></div>
+  <p class="ask hand">Anyone swipe the other way? Why?</p></div></div>`;
+  $('verdict').querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{const k=b.dataset.v;a[k]=Math.max(0,a[k]+ +b.dataset.s);renderReveal()});
+  $('nextb').textContent=st.i===deck.length-1?'See results →':'Next card →';
+}
+
+function renderEnd(){
+  const L=st.ans.filter(a=>a.d==='L').length,R=st.ans.length-L;
+  $('totals').innerHTML=`<span class="tot L">${L} swiped left</span><span class="tot R">${R} swiped right</span>`;
+  $('list').innerHTML=st.ans.map((a,j)=>`<li><span class="i">${j+1}</span><div>${esc(cardOf(j).t)}<small>Room: ${a.l} left · ${a.r} right</small></div><span class="pill ${a.d}">${a.d==='L'?'Left':'Right'}</span></li>`).join('');
+  $('copy').textContent='Copy results';
+}
+
+function setStamps(el,dx){
+  const o=Math.min(1,Math.abs(dx)/110);
+  el.querySelector('.stamp.yes').style.opacity=dx>0?o:0;
+  el.querySelector('.stamp.no').style.opacity=dx<0?o:0;
+}
+
+function drag(el){
+  let sx=0,sy=0,dx=0,dy=0,on=false;
+  el.addEventListener('pointerdown',e=>{if(busy)return;on=true;sx=e.clientX;sy=e.clientY;dx=dy=0;el.style.transition='none';el.setPointerCapture(e.pointerId)});
+  el.addEventListener('pointermove',e=>{if(!on)return;dx=e.clientX-sx;dy=e.clientY-sy;el.style.transform=`translate(${dx}px,${dy}px) rotate(${dx/20}deg)`;setStamps(el,dx)});
+  const up=()=>{if(!on)return;on=false;
+    if(Math.abs(dx)>110)fly(dx>0?'R':'L',dy);
+    else{el.style.transition=rm?'none':'transform .25s';el.style.transform='';setStamps(el,0)}};
+  el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);
+}
+
+function fly(d,dy=0){
+  if(busy||st.scr!=='play')return;
+  const el=$('card');if(!el)return;
+  busy=true;setStamps(el,d==='R'?200:-200);
+  const dir=d==='R'?1:-1;
+  el.style.transition=rm?'none':'transform .35s ease-in';
+  requestAnimationFrame(()=>{el.style.transform=`translate(${dir*innerWidth}px,${dy+60}px) rotate(${dir*25}deg)`});
+  setTimeout(()=>{st.ans[st.i]={d,l:0,r:0};st.scr='reveal';busy=false;show()},rm?0:380);
+}
+
+function next(){
+  if(st.scr!=='reveal')return;
+  st.i++;st.scr=st.i>=deck.length?'end':'play';
+  if(st.scr==='end')st.i=deck.length-1;
+  show();
+}
+function undo(){
+  if(busy)return;
+  if(st.scr==='reveal'){st.ans.length=st.i;st.scr='play';show()}
+  else if(st.scr==='play'&&st.i>0){st.i--;st.ans.length=st.i;show()}
+}
+
+$('go').onclick=()=>{st.scr='play';st.i=0;st.ans=[];show()};
+$('shuf').onclick=()=>{const o=deck.map((_,k)=>k);for(let k=o.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[o[k],o[j]]=[o[j],o[k]]}st=fresh(o);$('shuf').textContent='Shuffled!';show()};
+$('bno').onclick=()=>fly('L');
+$('byes').onclick=()=>fly('R');
+$('bun').onclick=undo;
+$('undo2').onclick=undo;
+$('nextb').onclick=next;
+$('home').onclick=()=>{st=fresh(st.order);show()};
+$('again').onclick=()=>{st=fresh(st.order);show()};
+$('fs').onclick=()=>{try{const d=document;if(d.fullscreenElement)d.exitFullscreen?.();else d.documentElement.requestFullscreen?.().catch(()=>{})}catch(e){}};
+$('copy').onclick=()=>{
+  const txt=st.ans.map((a,j)=>`${j+1}. ${cardOf(j).t} — ${a.d==='L'?'Left':'Right'} (room: ${a.l} left, ${a.r} right)`).join('\n');
+  try{navigator.clipboard.writeText(txt).then(()=>$('copy').textContent='Copied!',()=>$('copy').textContent='Copy failed')}catch(e){$('copy').textContent='Copy failed'}
+};
+
+const modal=$('modal'),ta=$('ta');
+const toText=arr=>arr.map(d=>d.p?`${d.t} | ${d.p}`:d.t).join('\n');
+$('edit').onclick=()=>{ta.value=toText(deck);modal.classList.add('on');ta.focus()};
+$('mcancel').onclick=()=>modal.classList.remove('on');
+modal.addEventListener('click',e=>{if(e.target===modal)modal.classList.remove('on')});
+$('mreset').onclick=()=>{ta.value=toText(SAMPLE)};
+$('msave').onclick=()=>{
+  const lines=ta.value.split('\n').map(s=>s.trim()).filter(Boolean);
+  if(!lines.length)return;
+  deck=lines.map(line=>{
+    const [t,...rest]=line.split('|');const text=t.trim(),pt=rest.join('|').trim();
+    const old=SAMPLE.find(s=>s.t===text);
+    return old?{...old,p:pt||old.p}:{c:'custom',v:'N',t:text,p:pt};
+  });
+  try{localStorage.setItem(KEY,JSON.stringify(deck))}catch(e){}
+  modal.classList.remove('on');st=fresh();show();
+};
+
+addEventListener('keydown',e=>{
+  if(modal.classList.contains('on')){if(e.key==='Escape')modal.classList.remove('on');return}
+  if(e.target.closest&&e.target.closest('textarea,input'))return;
+  if(st.scr==='play'){
+    if(e.key==='ArrowRight'){e.preventDefault();fly('R')}
+    else if(e.key==='ArrowLeft'){e.preventDefault();fly('L')}
+    else if(e.key==='Backspace'){e.preventDefault();undo()}
+  }else if(st.scr==='reveal'){
+    if(e.key==='Enter'||e.key===' '||e.key==='ArrowRight'){e.preventDefault();next()}
+    else if(e.key==='Backspace'){e.preventDefault();undo()}
+  }else if(st.scr==='start'&&e.key==='Enter'&&e.target===document.body){st.scr='play';show()}
+});
+
+window.claude?.hot?.snapshot?.(()=>st);
+const start=data=>{if(data&&data.scr&&Array.isArray(data.ans)&&Array.isArray(data.order)&&data.order.length===deck.length)st=data;show()};
+window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+}
+</script>
+</body>
+</html>
